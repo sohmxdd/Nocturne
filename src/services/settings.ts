@@ -12,7 +12,7 @@ const SETTINGS_KEY = 'nocturne:settings';
 const CRED_SERVICE = 'nocturne';
 const CRED_ACCOUNT_OPENAI = 'openai-api-key';
 
-const DEFAULT_SETTINGS: AppSettings = {
+export const DEFAULT_SETTINGS: AppSettings = {
   theme: 'dark',
   defaultZoom: 1.0,
   providerConfig: DEFAULT_PROVIDER_CONFIG,

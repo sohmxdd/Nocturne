@@ -20,6 +20,77 @@ export interface DatabaseAPI {
 let _db: DatabaseAPI | null = null;
 let _initPromise: Promise<void> | null = null;
 
+function splitTopLevelCommas(str: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let parenDepth = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if (char === '(') parenDepth++;
+    else if (char === ')') parenDepth--;
+    else if (char === ',' && parenDepth === 0) {
+      result.push(current.trim());
+      current = '';
+      continue;
+    }
+    current += char;
+  }
+  if (current.trim()) result.push(current.trim());
+  return result;
+}
+
+function parseSqlValue(valStr: string, params: unknown[], paramIndex: { val: number }): unknown {
+  const v = valStr.trim();
+  if (v === '?') {
+    return params[paramIndex.val++];
+  }
+  if (v.toUpperCase() === 'NULL') {
+    return null;
+  }
+  if ((v.startsWith("'") && v.endsWith("'")) || (v.startsWith('"') && v.endsWith('"'))) {
+    return v.slice(1, -1);
+  }
+  const num = Number(v);
+  if (!isNaN(num)) {
+    return num;
+  }
+  return v;
+}
+
+function evaluateWhere(row: SqlRow, condition: string, params: unknown[], startParamIdx: number): boolean {
+  const parts = condition.split(/\s+AND\s+/i);
+  let pIdx = startParamIdx;
+  for (const part of parts) {
+    const trimmedPart = part.trim();
+    const eqMatch = trimmedPart.match(/(\w+)\s*=\s*(.+)/);
+    if (!eqMatch) continue;
+    const col = eqMatch[1].toLowerCase();
+    const rhs = eqMatch[2].trim();
+    let expectedVal: unknown;
+    if (rhs === '?') {
+      expectedVal = params[pIdx++];
+    } else if (rhs.toUpperCase() === 'NULL') {
+      expectedVal = null;
+    } else if ((rhs.startsWith("'") && rhs.endsWith("'")) || (rhs.startsWith('"') && rhs.endsWith('"'))) {
+      expectedVal = rhs.slice(1, -1);
+    } else if (!isNaN(Number(rhs))) {
+      expectedVal = Number(rhs);
+    } else {
+      expectedVal = rhs;
+    }
+
+    const actualVal = row[col];
+    if (expectedVal === 0 || expectedVal === false) {
+      if (actualVal !== 0 && actualVal !== false && actualVal != null) return false;
+    } else if (expectedVal === 1 || expectedVal === true) {
+      if (actualVal !== 1 && actualVal !== true) return false;
+    } else if (actualVal != expectedVal) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // In-memory fallback for browser/dev/test mode
 export class InMemoryDB implements DatabaseAPI {
   private tables: Map<string, SqlRow[]> = new Map();
@@ -36,19 +107,21 @@ export class InMemoryDB implements DatabaseAPI {
     const trimmed = sql.trim();
     const upper = trimmed.toUpperCase();
 
-    // INSERT INTO table (col1, col2, ...) VALUES (?, ?, ...)
+    // INSERT INTO table (col1, col2, ...) VALUES (v1, v2, ...)
     if (upper.startsWith('INSERT INTO') || upper.startsWith('INSERT OR REPLACE INTO')) {
-      const match = trimmed.match(/INSERT(?:\s+OR\s+REPLACE)?\s+INTO\s+(\w+)\s*\(([^)]+)\)\s*VALUES/i);
+      const match = trimmed.match(/INSERT(?:\s+OR\s+REPLACE)?\s+INTO\s+(\w+)\s*\(([^)]+)\)\s*VALUES\s*\(([^)]+)\)/is);
       if (match) {
         const table = match[1];
         const cols = match[2].split(',').map(c => c.trim().toLowerCase());
+        const valTokens = splitTopLevelCommas(match[3]);
         const row: SqlRow = {};
+        const paramIndex = { val: 0 };
         cols.forEach((col, idx) => {
-          row[col] = params[idx] !== undefined ? params[idx] : null;
+          const valToken = valTokens[idx];
+          row[col] = valToken !== undefined ? parseSqlValue(valToken, params, paramIndex) : null;
         });
 
         const rows = this.getTable(table);
-        // If primary key (id or document_id) exists, update or append
         const pkCol = row['id'] !== undefined ? 'id' : row['document_id'] !== undefined ? 'document_id' : null;
         if (pkCol) {
           const existingIdx = rows.findIndex(r => r[pkCol] === row[pkCol]);
@@ -64,33 +137,51 @@ export class InMemoryDB implements DatabaseAPI {
 
     // UPDATE table SET col1 = ?, ... WHERE ...
     if (upper.startsWith('UPDATE')) {
-      const match = trimmed.match(/UPDATE\s+(\w+)\s+SET\s+(.+?)(?:\s+WHERE\s+(.+))?$/i);
+      const match = trimmed.match(/UPDATE\s+(\w+)\s+SET\s+(.+?)(?:\s+WHERE\s+(.+))?$/is);
       if (match) {
         const table = match[1];
         const setClause = match[2];
         const whereClause = match[3];
         const rows = this.getTable(table);
 
-        const setAssignments = setClause.split(',').map(s => s.trim().split('=')[0].trim().toLowerCase());
-        let paramIdx = 0;
-        const updates: Record<string, unknown> = {};
-        for (const col of setAssignments) {
-          updates[col] = params[paramIdx++];
+        const paramIndex = { val: 0 };
+        const assignments = splitTopLevelCommas(setClause);
+
+        const updateFns: Array<(row: SqlRow) => void> = [];
+
+        for (const assign of assignments) {
+          const eqIdx = assign.indexOf('=');
+          if (eqIdx === -1) continue;
+          const col = assign.slice(0, eqIdx).trim().toLowerCase();
+          const rhs = assign.slice(eqIdx + 1).trim();
+
+          if (rhs.toUpperCase().startsWith('COALESCE(')) {
+            const inner = rhs.slice(rhs.indexOf('(') + 1, rhs.lastIndexOf(')'));
+            const parts = splitTopLevelCommas(inner);
+            const firstVal = parseSqlValue(parts[0], params, paramIndex);
+            updateFns.push((r: SqlRow) => {
+              if (firstVal !== null && firstVal !== undefined) {
+                r[col] = firstVal;
+              }
+            });
+          } else {
+            const val = parseSqlValue(rhs, params, paramIndex);
+            updateFns.push((r: SqlRow) => {
+              r[col] = val;
+            });
+          }
         }
 
         let count = 0;
         for (let i = 0; i < rows.length; i++) {
           let matches = true;
           if (whereClause) {
-            const whereColMatch = whereClause.match(/(\w+)\s*=\s*\?/);
-            if (whereColMatch) {
-              const col = whereColMatch[1].toLowerCase();
-              const val = params[paramIdx];
-              matches = rows[i][col] === val;
-            }
+            matches = evaluateWhere(rows[i], whereClause, params, paramIndex.val);
           }
           if (matches) {
-            rows[i] = { ...rows[i], ...updates };
+            for (const fn of updateFns) {
+              fn(rows[i]);
+            }
             count++;
           }
         }
@@ -98,9 +189,10 @@ export class InMemoryDB implements DatabaseAPI {
       }
     }
 
+
     // DELETE FROM table WHERE ...
     if (upper.startsWith('DELETE FROM')) {
-      const match = trimmed.match(/DELETE\s+FROM\s+(\w+)(?:\s+WHERE\s+(.+))?$/i);
+      const match = trimmed.match(/DELETE\s+FROM\s+(\w+)(?:\s+WHERE\s+(.+))?$/is);
       if (match) {
         const table = match[1];
         const whereClause = match[2];
@@ -112,15 +204,10 @@ export class InMemoryDB implements DatabaseAPI {
           return { rowsAffected: count, lastInsertId: 0 };
         }
 
-        const whereColMatch = whereClause.match(/(\w+)\s*=\s*\?/);
-        if (whereColMatch) {
-          const col = whereColMatch[1].toLowerCase();
-          const val = params[0];
-          const initialLen = rows.length;
-          const filtered = rows.filter(r => r[col] !== val);
-          this.tables.set(table.toLowerCase(), filtered);
-          return { rowsAffected: initialLen - filtered.length, lastInsertId: 0 };
-        }
+        const filtered = rows.filter(r => !evaluateWhere(r, whereClause, params, 0));
+        const deleted = rows.length - filtered.length;
+        this.tables.set(table.toLowerCase(), filtered);
+        return { rowsAffected: deleted, lastInsertId: 0 };
       }
     }
 
@@ -129,7 +216,6 @@ export class InMemoryDB implements DatabaseAPI {
 
   async select<T = SqlRow>(sql: string, params: unknown[] = []): Promise<T[]> {
     const trimmed = sql.trim();
-    const upper = trimmed.toUpperCase();
 
     // SELECT ... FROM table [WHERE ...] [ORDER BY ...] [LIMIT ...]
     const fromMatch = trimmed.match(/FROM\s+(\w+)/i);
@@ -138,23 +224,14 @@ export class InMemoryDB implements DatabaseAPI {
     const table = fromMatch[1];
     let rows = [...this.getTable(table)];
 
-    // Basic WHERE matching
-    const whereMatch = trimmed.match(/WHERE\s+(.+?)(?:\s+ORDER\s+BY|\s+LIMIT|$)/i);
+    // WHERE condition
+    const whereMatch = trimmed.match(/WHERE\s+(.+?)(?:\s+ORDER\s+BY|\s+LIMIT|$)/is);
     if (whereMatch) {
       const condition = whereMatch[1];
-      const eqMatches = Array.from(condition.matchAll(/(\w+)\s*=\s*\?/g));
-      if (eqMatches.length > 0) {
-        rows = rows.filter(row => {
-          return eqMatches.every((m, idx) => {
-            const col = m[1].toLowerCase();
-            const val = params[idx];
-            return row[col] === val;
-          });
-        });
-      }
+      rows = rows.filter(row => evaluateWhere(row, condition, params, 0));
     }
 
-    // Basic ORDER BY
+    // ORDER BY
     const orderMatch = trimmed.match(/ORDER\s+BY\s+(\w+)(?:\s+(ASC|DESC))?/i);
     if (orderMatch) {
       const col = orderMatch[1].toLowerCase();
@@ -168,7 +245,7 @@ export class InMemoryDB implements DatabaseAPI {
       });
     }
 
-    // Basic LIMIT
+    // LIMIT
     const limitMatch = trimmed.match(/LIMIT\s+(\d+|\?)/i);
     if (limitMatch) {
       const limitVal = limitMatch[1] === '?' ? Number(params[params.length - 1]) : parseInt(limitMatch[1], 10);
@@ -184,6 +261,7 @@ export class InMemoryDB implements DatabaseAPI {
     this.tables.clear();
   }
 }
+
 
 export async function getDb(): Promise<DatabaseAPI> {
   if (_db) return _db;
