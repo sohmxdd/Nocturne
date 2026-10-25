@@ -1,0 +1,220 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 640px;
+  margin: 0 auto;
+  gap: var(--space-6);
+  width: 100%;
+}
+
+.progressHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.cardCounter {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.statPill {
+  font-size: 11px;
+  padding: 3px 8px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-full);
+  color: var(--color-text-secondary);
+}
+
+.masteredPill {
+  color: var(--color-success);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.resetBtn {
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.resetBtn:hover {
+  color: var(--color-text-primary);
+}
+
+/* 3D Flip Card */
+.cardWrapper {
+  width: 100%;
+  height: 340px;
+  perspective: 1000px;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+}
+
+.cardInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.cardWrapper.flipped .cardInner {
+  transform: rotateY(180deg);
+}
+
+.cardFront, .cardBack {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border-subtle);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+}
+
+.cardFront {
+  background: var(--color-bg-surface);
+}
+
+.cardBack {
+  background: var(--color-bg-shell);
+  transform: rotateY(180deg);
+}
+
+.cardBadge {
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-accent);
+}
+
+.cardBadgeBack {
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-success);
+}
+
+.cardPrompt {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-relaxed);
+  max-width: 480px;
+}
+
+.cardAnswer {
+  font-family: var(--font-serif);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-relaxed);
+  max-width: 480px;
+  overflow-y: auto;
+  max-height: 200px;
+}
+
+.cardHint {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+.citationBadge {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-base);
+  border: 1px solid var(--color-border-subtle);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+}
+
+.actionsBar {
+  display: flex;
+  gap: var(--space-4);
+  width: 100%;
+  justify-content: center;
+}
+
+.rateBtn {
+  flex: 1;
+  max-width: 200px;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.againBtn {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+  color: var(--color-text-secondary);
+}
+
+.againBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.goodBtn {
+  background: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  color: #fff;
+}
+
+.goodBtn:hover {
+  box-shadow: 0 4px 12px var(--color-accent-subtle);
+  transform: translateY(-1px);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-16) var(--space-6);
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 40px;
+  margin-bottom: var(--space-3);
+}
+
+.emptyState h3 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-lg);
+  color: var(--color-text-primary);
+}
+
+.emptyState p {
+  margin: 0;
+  max-width: 440px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-relaxed);
+}
