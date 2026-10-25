@@ -104,7 +104,7 @@ export interface ReadingSession {
 }
 
 // ── Agent / AI ────────────────────────────────────────────
-export type BeaconMode = 'explain' | 'connect' | 'challenge' | 'apply';
+export type BeaconMode = 'explain' | 'connect' | 'challenge' | 'apply' | 'summarize' | 'quiz' | 'freeform';
 export type MessageRole = 'user' | 'assistant' | 'system';
 export type MessageStatus = 'streaming' | 'complete' | 'error';
 

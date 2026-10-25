@@ -20,7 +20,7 @@ async function getInvoke() {
   if (!_invoke) {
     try {
       const tauri = await import('@tauri-apps/api/core');
-      _invoke = tauri.invoke as typeof _invoke;
+      _invoke = tauri.invoke as unknown as typeof _invoke;
     } catch {
       _invoke = null;
     }

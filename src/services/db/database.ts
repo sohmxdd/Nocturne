@@ -294,10 +294,15 @@ export async function getDb(): Promise<DatabaseAPI> {
       const conn = await Database.load('sqlite:nocturne.db');
 
       _db = {
-        execute: (sql, params) => conn.execute(sql, params),
+        execute: async (sql, params) => {
+          const res = await conn.execute(sql, params);
+          return { rowsAffected: res.rowsAffected, lastInsertId: res.lastInsertId ?? 0 };
+        },
         select: <T>(sql: string, params?: unknown[]) =>
           conn.select<T>(sql, params),
-        close: () => conn.close(),
+        close: async () => {
+          await conn.close();
+        },
       };
 
       await runMigrations(_db);

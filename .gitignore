@@ -38,6 +38,7 @@ desktop.ini
 # Build artifacts
 *.log
 *.tgz
+*.tsbuildinfo
 
 # Test output (actual reports committed if needed)
 playwright-report/

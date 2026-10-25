@@ -102,6 +102,10 @@ export async function deleteOpenAIKey(): Promise<void> {
   await deleteCredential(CRED_SERVICE, CRED_ACCOUNT_OPENAI);
 }
 
+export const getApiKey = getOpenAIKey;
+export const setApiKey = setOpenAIKey;
+export const deleteApiKey = deleteOpenAIKey;
+
 // ── Provider config ───────────────────────────────────────
 export function saveProviderConfig(config: Partial<ProviderConfig>): void {
   saveSettings({ providerConfig: config as ProviderConfig });

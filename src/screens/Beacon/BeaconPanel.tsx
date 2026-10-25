@@ -95,7 +95,7 @@ export default function BeaconPanel({
       threadId: thread.id,
       role: 'user',
       content: textToSend,
-      sourceRefs: selectedText ? [{ page: currentPage, quote: selectedText }] : [],
+      sourceRefs: selectedText ? [{ pageIndex: currentPage, textSnippet: selectedText, confidence: 1.0 }] : [],
     });
     setMessages(prev => [...prev, userMsg]);
 
@@ -117,7 +117,10 @@ export default function BeaconPanel({
             relevantAnnotations: state.annotations.filter(
               a => a.pageIndex === currentPage && !a.isDeleted
             ),
-            recentMessages: messages.slice(-4),
+            recentMessages: messages
+              .slice(-4)
+              .filter((m): m is AgentMessage & { role: 'user' | 'assistant' } => m.role === 'user' || m.role === 'assistant')
+              .map(m => ({ role: m.role, content: m.content })),
           },
         },
         config: state.settings.providerConfig,

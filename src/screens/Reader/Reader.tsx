@@ -288,11 +288,10 @@ export default function Reader() {
         {state.beaconOpen && (
           <BeaconPanel
             documentId={doc.id}
-            documentTitle={doc.title}
             currentPage={currentPage}
             selectedText={state.selectedText}
             onClose={() => dispatch({ type: 'SET_BEACON_OPEN', payload: false })}
-            onNavigate={setCurrentPage}
+            doc={doc}
           />
         )}
       </div>

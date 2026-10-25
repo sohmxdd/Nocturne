@@ -282,6 +282,9 @@ export function buildSystemPrompt(mode: BeaconMode, documentTitle: string | null
     connect: `Your role is to connect ideas within "${title}" and to broader concepts. Link the current passage to other sections or related fields. Be explicit about which connections are from the document vs. your additional reasoning.`,
     challenge: `Your role is to ask probing questions about "${title}" to deepen understanding. Generate comprehension questions, identify potential gaps in the argument, and create quizzes when asked.`,
     apply: `Your role is to help apply concepts from "${title}" to real situations. Discuss practical implications, trade-offs, and how ideas manifest in the real world.`,
+    summarize: `Your role is to summarize key points and main takeaways from "${title}". Provide concise, structured overviews.`,
+    quiz: `Your role is to test the reader's comprehension of "${title}". Formulate active-recall practice questions and clear answers.`,
+    freeform: `Your role is to assist with any open questions or inquiries about "${title}". Ground all answers in document evidence.`,
   };
 
   return `You are Nocturne's Context Beacon — a grounded reading companion for "${title}".

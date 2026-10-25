@@ -185,8 +185,8 @@ export async function getPageTextContent(
 
 export function textContentToString(textContent: TextContent): string {
   return textContent.items
-    .filter((item): item is TextItem => 'str' in item)
-    .map(item => item.str)
+    .map(item => ('str' in item ? (item as { str: string }).str : ''))
+    .filter(Boolean)
     .join(' ')
     .replace(/\s+/g, ' ')
     .trim();
