@@ -224,6 +224,20 @@ export class InMemoryDB implements DatabaseAPI {
     const table = fromMatch[1];
     let rows = [...this.getTable(table)];
 
+    // Support LEFT JOIN
+    const joinMatch = trimmed.match(/LEFT\s+JOIN\s+(\w+)(?:\s+\w+)?\s+ON\s+([\w.]+)\s*=\s*([\w.]+)/i);
+    if (joinMatch) {
+      const joinTable = joinMatch[1].toLowerCase();
+      const leftCol = joinMatch[2].split('.').pop()!.toLowerCase();
+      const rightCol = joinMatch[3].split('.').pop()!.toLowerCase();
+
+      const joinRows = this.getTable(joinTable);
+      rows = rows.map(r => {
+        const matching = joinRows.find(jr => jr[leftCol] === r[rightCol] || jr[rightCol] === r[leftCol]);
+        return matching ? { ...r, ...matching } : r;
+      });
+    }
+
     // WHERE condition
     const whereMatch = trimmed.match(/WHERE\s+(.+?)(?:\s+ORDER\s+BY|\s+LIMIT|$)/is);
     if (whereMatch) {
