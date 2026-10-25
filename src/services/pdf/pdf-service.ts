@@ -28,9 +28,14 @@ export type PdfOutlineItem = {
   children: PdfOutlineItem[];
 };
 
+export type TextContent = Awaited<ReturnType<PDFPageProxy['getTextContent']>>;
+export type TextItem = { str: string; dir?: string; width?: number; height?: number; transform?: number[]; fontName?: string; hasEOL?: boolean };
+export type RenderParameters = Parameters<PDFPageProxy['render']>[0];
+export type RefProxy = Parameters<PDFDocumentProxy['getPageIndex']>[0];
+
 export type RenderResult = {
   canvas: HTMLCanvasElement;
-  textContent: pdfjs.TextContent | null;
+  textContent: TextContent | null;
 };
 
 export type ExtractionProgress = {
@@ -112,12 +117,12 @@ async function buildOutline(
       if (item.dest) {
         let dest = item.dest;
         if (typeof dest === 'string') {
-          dest = await pdf.getDestination(dest);
+          dest = (await pdf.getDestination(dest)) as unknown as unknown[];
         }
         if (Array.isArray(dest) && dest.length > 0) {
           const ref = dest[0];
           if (typeof ref === 'object' && ref !== null && 'num' in ref) {
-            pageIndex = await pdf.getPageIndex(ref as pdfjs.RefProxy);
+            pageIndex = await pdf.getPageIndex(ref as RefProxy);
           }
         }
       }
@@ -149,7 +154,7 @@ export async function renderPage(
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Cannot get 2D canvas context');
 
-  const renderContext: pdfjs.RenderParameters = {
+  const renderContext: RenderParameters = {
     canvasContext: ctx,
     viewport,
   };
@@ -170,7 +175,7 @@ export function getPageDimensions(
 // ── Text content ──────────────────────────────────────────
 export async function getPageTextContent(
   page: PDFPageProxy
-): Promise<pdfjs.TextContent | null> {
+): Promise<TextContent | null> {
   try {
     return await page.getTextContent();
   } catch {
@@ -178,9 +183,9 @@ export async function getPageTextContent(
   }
 }
 
-export function textContentToString(textContent: pdfjs.TextContent): string {
+export function textContentToString(textContent: TextContent): string {
   return textContent.items
-    .filter((item): item is pdfjs.TextItem => 'str' in item)
+    .filter((item): item is TextItem => 'str' in item)
     .map(item => item.str)
     .join(' ')
     .replace(/\s+/g, ' ')
