@@ -18,6 +18,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.12.4",
+    "@tauri-apps/plugin-sql": "^2.6.0",
     "pdfjs-dist": "4.9.155",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

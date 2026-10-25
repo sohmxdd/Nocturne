@@ -26,6 +26,22 @@ export interface DocumentWithProgress extends Document {
   zoomLevel: number;
 }
 
+// ── PDF Metadata & Outline ────────────────────────────────
+export interface PdfOutlineItem {
+  title: string;
+  pageIndex: number | null;
+  children: PdfOutlineItem[];
+}
+
+export interface PdfMetadata {
+  title: string | null;
+  author: string | null;
+  pageCount: number;
+  outline: PdfOutlineItem[];
+  isEncrypted: boolean;
+  hasTextLayer: boolean;
+}
+
 // ── Reading Progress ──────────────────────────────────────
 export type ReadingMode = 'default' | 'focus';
 
