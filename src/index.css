@@ -1,0 +1,348 @@
+/* ============================================================
+   NOCTURNE DESIGN SYSTEM
+   Global CSS Custom Properties + Reset
+   ============================================================ */
+
+/* ── Tokens ─────────────────────────────────────────────── */
+:root {
+  /* Shell backgrounds — layered from darkest to lightest */
+  --color-bg-base:      #0e1016;
+  --color-bg-shell:     #11131a;
+  --color-bg-surface:   #191c25;
+  --color-bg-overlay:   #1f2330;
+  --color-bg-element:   #242938;
+  --color-bg-raised:    #2c3244;
+  --color-bg-hover:     #303647;
+
+  /* Borders */
+  --color-border-subtle:  rgba(255,255,255,0.06);
+  --color-border-default: rgba(255,255,255,0.10);
+  --color-border-strong:  rgba(255,255,255,0.18);
+
+  /* Text */
+  --color-text-primary:   #e8eaf0;
+  --color-text-secondary: #9ca3af;
+  --color-text-muted:     #6b7280;
+  --color-text-disabled:  #4b5563;
+  --color-text-inverse:   #11131a;
+
+  /* Accent — muted violet */
+  --color-accent:          #a78bfa;
+  --color-accent-hover:    #c4b5fd;
+  --color-accent-muted:    rgba(167,139,250,0.12);
+  --color-accent-border:   rgba(167,139,250,0.30);
+
+  /* Status */
+  --color-success:        #79c9b4;
+  --color-success-muted:  rgba(121,201,180,0.12);
+  --color-warning:        #e6b873;
+  --color-warning-muted:  rgba(230,184,115,0.12);
+  --color-error:          #f28b9b;
+  --color-error-muted:    rgba(242,139,155,0.12);
+  --color-info:           #7db8f7;
+  --color-info-muted:     rgba(125,184,247,0.12);
+
+  /* Highlight colors */
+  --color-hl-amber:       rgba(230,184,115,0.35);
+  --color-hl-teal:        rgba(121,201,180,0.35);
+  --color-hl-violet:      rgba(167,139,250,0.35);
+  --color-hl-rose:        rgba(242,139,155,0.35);
+  --color-hl-amber-solid: #e6b873;
+  --color-hl-teal-solid:  #79c9b4;
+  --color-hl-violet-solid:#a78bfa;
+  --color-hl-rose-solid:  #f28b9b;
+
+  /* PDF canvas */
+  --color-canvas-bg:   #ffffff;
+  --color-canvas-shadow: rgba(0,0,0,0.6);
+
+  /* Spacing scale */
+  --space-0:  0px;
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* Border radii */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-2xl:  24px;
+  --radius-full: 9999px;
+
+  /* Typography */
+  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:   'JetBrains Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --font-size-2xs: 10px;
+  --font-size-xs:  11px;
+  --font-size-sm:  13px;
+  --font-size-md:  14px;
+  --font-size-base: 15px;
+  --font-size-lg:  17px;
+  --font-size-xl:  20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+
+  --font-weight-light:   300;
+  --font-weight-regular: 400;
+  --font-weight-medium:  500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:    700;
+
+  --line-height-tight:   1.25;
+  --line-height-snug:    1.375;
+  --line-height-normal:  1.5;
+  --line-height-relaxed: 1.625;
+
+  --letter-spacing-tight:  -0.02em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide:   0.04em;
+  --letter-spacing-wider:  0.08em;
+
+  /* Shadows */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3);
+  --shadow-lg:  0 10px 30px rgba(0,0,0,0.6), 0 4px 8px rgba(0,0,0,0.4);
+  --shadow-xl:  0 20px 50px rgba(0,0,0,0.7);
+  --shadow-beacon: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(167,139,250,0.15);
+
+  /* Transitions */
+  --transition-fast:   150ms ease;
+  --transition-normal: 220ms ease;
+  --transition-slow:   350ms ease;
+
+  /* Layout */
+  --sidebar-width:        260px;
+  --sidebar-collapsed:    56px;
+  --toolbar-height:       48px;
+  --beacon-panel-width:   380px;
+  --library-card-min:     220px;
+  --z-base:     0;
+  --z-sidebar:  10;
+  --z-toolbar:  20;
+  --z-overlay:  30;
+  --z-beacon:   40;
+  --z-dialog:   50;
+  --z-tooltip:  60;
+  --z-toast:    70;
+}
+
+/* ── Light theme overrides ───────────────────────────────── */
+[data-theme="light"] {
+  --color-bg-base:      #f4f5f7;
+  --color-bg-shell:     #ffffff;
+  --color-bg-surface:   #f8f9fc;
+  --color-bg-overlay:   #ffffff;
+  --color-bg-element:   #eef0f5;
+  --color-bg-raised:    #e8ecf2;
+  --color-bg-hover:     #dde2eb;
+
+  --color-border-subtle:  rgba(0,0,0,0.06);
+  --color-border-default: rgba(0,0,0,0.10);
+  --color-border-strong:  rgba(0,0,0,0.18);
+
+  --color-text-primary:   #1a1d27;
+  --color-text-secondary: #4b5563;
+  --color-text-muted:     #6b7280;
+  --color-text-disabled:  #9ca3af;
+  --color-text-inverse:   #ffffff;
+
+  --color-accent:         #7c3aed;
+  --color-accent-hover:   #6d28d9;
+  --color-accent-muted:   rgba(124,58,237,0.10);
+  --color-accent-border:  rgba(124,58,237,0.25);
+
+  --color-success:        #059669;
+  --color-success-muted:  rgba(5,150,105,0.10);
+  --color-warning:        #d97706;
+  --color-warning-muted:  rgba(217,119,6,0.10);
+  --color-error:          #dc2626;
+  --color-error-muted:    rgba(220,38,38,0.10);
+
+  --color-hl-amber:       rgba(217,119,6,0.25);
+  --color-hl-teal:        rgba(5,150,105,0.25);
+  --color-hl-violet:      rgba(124,58,237,0.25);
+  --color-hl-rose:        rgba(220,38,38,0.25);
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
+  --shadow-lg:  0 10px 30px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.08);
+  --shadow-xl:  0 20px 50px rgba(0,0,0,0.20);
+  --shadow-beacon: 0 8px 32px rgba(0,0,0,0.18), 0 0 0 1px rgba(124,58,237,0.15);
+
+  --color-canvas-shadow: rgba(0,0,0,0.15);
+}
+
+/* ── Global reset ────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-base);
+  overflow: hidden; /* App is full-screen; scrolling is within panels */
+  user-select: none; /* Prevent accidental drag selection; re-enable in text areas */
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Typography utilities ────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
+  color: var(--color-text-primary);
+}
+
+p { line-height: var(--line-height-relaxed); }
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+a:hover { color: var(--color-accent-hover); text-decoration: underline; }
+
+code, pre {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+/* ── Scrollbars ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-border-strong); }
+
+/* ── Focus rings ─────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Selection ───────────────────────────────────────────── */
+::selection {
+  background: var(--color-accent-muted);
+  color: var(--color-text-primary);
+}
+
+/* ── Re-enable text selection in readable areas ──────────── */
+.selectable-text { user-select: text; }
+
+/* ── Reduced motion ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Utility classes ─────────────────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-accent    { color: var(--color-accent); }
+.text-success   { color: var(--color-success); }
+.text-warning   { color: var(--color-warning); }
+.text-error     { color: var(--color-error); }
+.text-muted     { color: var(--color-text-muted); }
+.text-secondary { color: var(--color-text-secondary); }
+
+/* ── Animation keyframes ─────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(167,139,250,0); }
+  50%       { box-shadow: 0 0 0 6px rgba(167,139,250,0.15); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in       { animation: fade-in var(--transition-normal) both; }
+.animate-slide-in-right { animation: slide-in-right var(--transition-normal) both; }
+.animate-slide-in-left  { animation: slide-in-left var(--transition-normal) both; }
+.animate-spin           { animation: spin 1s linear infinite; }
+
+/* ── Skeleton loading ────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-element) 0%,
+    var(--color-bg-raised) 50%,
+    var(--color-bg-element) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ── PDF canvas host ─────────────────────────────────────── */
+.pdf-page-canvas {
+  display: block;
+  background: var(--color-canvas-bg);
+  box-shadow: 0 2px 20px var(--color-canvas-shadow);
+}
