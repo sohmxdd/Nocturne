@@ -1,0 +1,46 @@
+.canvasContainer {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+.canvas {
+  display: block;
+  background: var(--color-canvas-bg);
+  box-shadow: 0 4px 24px var(--color-canvas-shadow);
+  border-radius: 2px;
+  transition: opacity var(--transition-fast);
+  max-width: 100%;
+  user-select: none;
+}
+
+.renderOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--color-bg-base), 0.5);
+  z-index: 1;
+}
+
+.renderSpinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--color-border-default);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+.renderError {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  background: var(--color-error-muted);
+  border-radius: var(--radius-md);
+  min-height: 200px;
+}
