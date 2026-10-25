@@ -4,13 +4,14 @@
 // In non-Tauri mode, uses an in-memory store for UI development.
 // ============================================================
 
-import { IS_TAURI } from '../lib/tauri';
+import { IS_TAURI } from '../../lib/tauri';
+import Database from '@tauri-apps/plugin-sql';
 
 // ── DB Connection ─────────────────────────────────────────
-type SqlResult = { rowsAffected: number; lastInsertId: number };
-type SqlRow = Record<string, unknown>;
+export type SqlResult = { rowsAffected: number; lastInsertId: number };
+export type SqlRow = Record<string, unknown>;
 
-interface DatabaseAPI {
+export interface DatabaseAPI {
   execute(sql: string, params?: unknown[]): Promise<SqlResult>;
   select<T = SqlRow>(sql: string, params?: unknown[]): Promise<T[]>;
   close(): Promise<void>;
@@ -20,21 +21,168 @@ let _db: DatabaseAPI | null = null;
 let _initPromise: Promise<void> | null = null;
 
 // In-memory fallback for browser/dev/test mode
-class InMemoryDB implements DatabaseAPI {
+export class InMemoryDB implements DatabaseAPI {
   private tables: Map<string, SqlRow[]> = new Map();
-  private autoIds: Map<string, number> = new Map();
 
-  async execute(sql: string, _params?: unknown[]): Promise<SqlResult> {
-    // Minimal implementation — real logic in SQLite
-    console.debug('[MockDB] execute:', sql.slice(0, 80));
+  private getTable(name: string): SqlRow[] {
+    const tableKey = name.toLowerCase().trim();
+    if (!this.tables.has(tableKey)) {
+      this.tables.set(tableKey, []);
+    }
+    return this.tables.get(tableKey)!;
+  }
+
+  async execute(sql: string, params: unknown[] = []): Promise<SqlResult> {
+    const trimmed = sql.trim();
+    const upper = trimmed.toUpperCase();
+
+    // INSERT INTO table (col1, col2, ...) VALUES (?, ?, ...)
+    if (upper.startsWith('INSERT INTO') || upper.startsWith('INSERT OR REPLACE INTO')) {
+      const match = trimmed.match(/INSERT(?:\s+OR\s+REPLACE)?\s+INTO\s+(\w+)\s*\(([^)]+)\)\s*VALUES/i);
+      if (match) {
+        const table = match[1];
+        const cols = match[2].split(',').map(c => c.trim().toLowerCase());
+        const row: SqlRow = {};
+        cols.forEach((col, idx) => {
+          row[col] = params[idx] !== undefined ? params[idx] : null;
+        });
+
+        const rows = this.getTable(table);
+        // If primary key (id or document_id) exists, update or append
+        const pkCol = row['id'] !== undefined ? 'id' : row['document_id'] !== undefined ? 'document_id' : null;
+        if (pkCol) {
+          const existingIdx = rows.findIndex(r => r[pkCol] === row[pkCol]);
+          if (existingIdx >= 0) {
+            rows[existingIdx] = { ...rows[existingIdx], ...row };
+            return { rowsAffected: 1, lastInsertId: 0 };
+          }
+        }
+        rows.push(row);
+        return { rowsAffected: 1, lastInsertId: rows.length };
+      }
+    }
+
+    // UPDATE table SET col1 = ?, ... WHERE ...
+    if (upper.startsWith('UPDATE')) {
+      const match = trimmed.match(/UPDATE\s+(\w+)\s+SET\s+(.+?)(?:\s+WHERE\s+(.+))?$/i);
+      if (match) {
+        const table = match[1];
+        const setClause = match[2];
+        const whereClause = match[3];
+        const rows = this.getTable(table);
+
+        const setAssignments = setClause.split(',').map(s => s.trim().split('=')[0].trim().toLowerCase());
+        let paramIdx = 0;
+        const updates: Record<string, unknown> = {};
+        for (const col of setAssignments) {
+          updates[col] = params[paramIdx++];
+        }
+
+        let count = 0;
+        for (let i = 0; i < rows.length; i++) {
+          let matches = true;
+          if (whereClause) {
+            const whereColMatch = whereClause.match(/(\w+)\s*=\s*\?/);
+            if (whereColMatch) {
+              const col = whereColMatch[1].toLowerCase();
+              const val = params[paramIdx];
+              matches = rows[i][col] === val;
+            }
+          }
+          if (matches) {
+            rows[i] = { ...rows[i], ...updates };
+            count++;
+          }
+        }
+        return { rowsAffected: count, lastInsertId: 0 };
+      }
+    }
+
+    // DELETE FROM table WHERE ...
+    if (upper.startsWith('DELETE FROM')) {
+      const match = trimmed.match(/DELETE\s+FROM\s+(\w+)(?:\s+WHERE\s+(.+))?$/i);
+      if (match) {
+        const table = match[1];
+        const whereClause = match[2];
+        const rows = this.getTable(table);
+
+        if (!whereClause) {
+          const count = rows.length;
+          rows.length = 0;
+          return { rowsAffected: count, lastInsertId: 0 };
+        }
+
+        const whereColMatch = whereClause.match(/(\w+)\s*=\s*\?/);
+        if (whereColMatch) {
+          const col = whereColMatch[1].toLowerCase();
+          const val = params[0];
+          const initialLen = rows.length;
+          const filtered = rows.filter(r => r[col] !== val);
+          this.tables.set(table.toLowerCase(), filtered);
+          return { rowsAffected: initialLen - filtered.length, lastInsertId: 0 };
+        }
+      }
+    }
+
     return { rowsAffected: 0, lastInsertId: 0 };
   }
 
-  async select<T = SqlRow>(_sql: string, _params?: unknown[]): Promise<T[]> {
-    return [] as T[];
+  async select<T = SqlRow>(sql: string, params: unknown[] = []): Promise<T[]> {
+    const trimmed = sql.trim();
+    const upper = trimmed.toUpperCase();
+
+    // SELECT ... FROM table [WHERE ...] [ORDER BY ...] [LIMIT ...]
+    const fromMatch = trimmed.match(/FROM\s+(\w+)/i);
+    if (!fromMatch) return [] as T[];
+
+    const table = fromMatch[1];
+    let rows = [...this.getTable(table)];
+
+    // Basic WHERE matching
+    const whereMatch = trimmed.match(/WHERE\s+(.+?)(?:\s+ORDER\s+BY|\s+LIMIT|$)/i);
+    if (whereMatch) {
+      const condition = whereMatch[1];
+      const eqMatches = Array.from(condition.matchAll(/(\w+)\s*=\s*\?/g));
+      if (eqMatches.length > 0) {
+        rows = rows.filter(row => {
+          return eqMatches.every((m, idx) => {
+            const col = m[1].toLowerCase();
+            const val = params[idx];
+            return row[col] === val;
+          });
+        });
+      }
+    }
+
+    // Basic ORDER BY
+    const orderMatch = trimmed.match(/ORDER\s+BY\s+(\w+)(?:\s+(ASC|DESC))?/i);
+    if (orderMatch) {
+      const col = orderMatch[1].toLowerCase();
+      const desc = orderMatch[2]?.toUpperCase() === 'DESC';
+      rows.sort((a, b) => {
+        const valA = a[col] as string | number;
+        const valB = b[col] as string | number;
+        if (valA < valB) return desc ? 1 : -1;
+        if (valA > valB) return desc ? -1 : 1;
+        return 0;
+      });
+    }
+
+    // Basic LIMIT
+    const limitMatch = trimmed.match(/LIMIT\s+(\d+|\?)/i);
+    if (limitMatch) {
+      const limitVal = limitMatch[1] === '?' ? Number(params[params.length - 1]) : parseInt(limitMatch[1], 10);
+      if (!isNaN(limitVal)) {
+        rows = rows.slice(0, limitVal);
+      }
+    }
+
+    return rows as unknown as T[];
   }
 
-  async close(): Promise<void> {}
+  async close(): Promise<void> {
+    this.tables.clear();
+  }
 }
 
 export async function getDb(): Promise<DatabaseAPI> {
@@ -51,8 +199,6 @@ export async function getDb(): Promise<DatabaseAPI> {
     }
 
     try {
-      const sqlPlugin = await import('@tauri-apps/plugin-sql');
-      const Database = sqlPlugin.default;
       const conn = await Database.load('sqlite:nocturne.db');
 
       _db = {

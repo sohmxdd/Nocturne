@@ -39,24 +39,24 @@ export async function exportAllData(): Promise<ExportData> {
     exportVersion: EXPORT_VERSION,
     exportedAt: new Date().toISOString(),
     appVersion: APP_VERSION,
-    documents: documents.map(snakeToCamel) as ExportData['documents'],
-    readingProgress: readingProgress.map(snakeToCamel) as ExportData['readingProgress'],
-    bookmarks: bookmarks.map(snakeToCamel) as ExportData['bookmarks'],
+    documents: documents.map(snakeToCamel) as unknown as ExportData['documents'],
+    readingProgress: readingProgress.map(snakeToCamel) as unknown as ExportData['readingProgress'],
+    bookmarks: bookmarks.map(snakeToCamel) as unknown as ExportData['bookmarks'],
     annotations: annotations.map(row => ({
       ...snakeToCamel(row),
       rectsJson: tryParseJson(row['rects_json'] as string),
-    })) as ExportData['annotations'],
+    })) as unknown as ExportData['annotations'],
     readingSessions: readingSessions.map(row => ({
       ...snakeToCamel(row),
       pagesVisited: tryParseJson(row['pages_visited'] as string),
-    })) as ExportData['readingSessions'],
-    agentThreads: agentThreads.map(snakeToCamel) as ExportData['agentThreads'],
+    })) as unknown as ExportData['readingSessions'],
+    agentThreads: agentThreads.map(snakeToCamel) as unknown as ExportData['agentThreads'],
     agentMessages: agentMessages.map(row => ({
       ...snakeToCamel(row),
       sourceRefs: tryParseJson(row['source_refs'] as string),
-    })) as ExportData['agentMessages'],
-    thoughtTrails: thoughtTrails.map(snakeToCamel) as ExportData['thoughtTrails'],
-    thoughtTrailItems: thoughtTrailItems.map(snakeToCamel) as ExportData['thoughtTrailItems'],
+    })) as unknown as ExportData['agentMessages'],
+    thoughtTrails: thoughtTrails.map(snakeToCamel) as unknown as ExportData['thoughtTrails'],
+    thoughtTrailItems: thoughtTrailItems.map(snakeToCamel) as unknown as ExportData['thoughtTrailItems'],
   };
 }
 
